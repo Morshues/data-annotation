@@ -85,7 +85,6 @@ apps/
 
 - 後端除錯：對 `api: debug` 按 Debug。它不會自動重啟，改完程式要重新執行。
 - 前端除錯：先啟動 `web: dev`，再對 `web: debug (Chrome)` 按 Debug。
-- 第一次使用時，到 **Settings → Languages & Frameworks → Node.js** 確認 Node interpreter 是 Node 24，Package manager 選 `pnpm`。
 
 ## Docker Compose
 
