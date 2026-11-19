@@ -99,7 +99,7 @@ export function AnnotationsPage() {
           <input
             type="search"
             value={keyword}
-            placeholder="搜尋標註、上下文、描述、備註"
+            placeholder="搜尋標註、上下文、描述"
             onChange={(e) => setKeyword(e.target.value)}
           />
         </label>
@@ -140,7 +140,12 @@ export function AnnotationsPage() {
                       checked={selectedTags.includes(t.id)}
                       onChange={() => toggleTag(t.id)}
                     />
-                    <span className="tag-filter-name">{t.name}</span>
+                    <span
+                      className="tag-filter-name"
+                      title={t.description || undefined}
+                    >
+                      {t.name}
+                    </span>
                     <span className="count">{t.annotationCount}</span>
                   </label>
                 </li>
@@ -235,7 +240,11 @@ export function AnnotationsPage() {
                   {a.tags.length > 0 && (
                     <div className="tags">
                       {a.tags.map((t) => (
-                        <span key={t.id} className="tag">
+                        <span
+                          key={t.id}
+                          className="tag"
+                          title={t.description || undefined}
+                        >
                           {t.name}
                         </span>
                       ))}
@@ -245,12 +254,6 @@ export function AnnotationsPage() {
                     <p className="card-field">
                       <span>描述</span>
                       {a.description}
-                    </p>
-                  )}
-                  {a.note && (
-                    <p className="card-field">
-                      <span>備註</span>
-                      {a.note}
                     </p>
                   )}
                 </>

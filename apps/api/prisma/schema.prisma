@@ -34,7 +34,6 @@ model Annotation {
   contextStart Int?
   contextEnd   Int?
   description  String    @default("")
-  note         String    @default("")
   tags         Tag[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -45,5 +44,6 @@ model Annotation {
 model Tag {
   id          Int          @id @default(autoincrement())
   name        String       @unique
+  description String       @default("")
   annotations Annotation[]
 }

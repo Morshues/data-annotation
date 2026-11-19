@@ -11,7 +11,7 @@ type Props = {
   onClose?: () => void
 }
 
-// Edits the tags, description and note of an existing annotation.
+// Edits the tags and description of an existing annotation.
 export function AnnotationEditor({
   annotation,
   tagSuggestions,
@@ -21,7 +21,6 @@ export function AnnotationEditor({
 }: Props) {
   const [tags, setTags] = useState(annotation.tags.map((t) => t.name))
   const [description, setDescription] = useState(annotation.description)
-  const [note, setNote] = useState(annotation.note)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -59,21 +58,13 @@ export function AnnotationEditor({
           onChange={(e) => setDescription(e.target.value)}
         />
       </label>
-      <label className="field">
-        <span>備註</span>
-        <textarea
-          rows={3}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-      </label>
       {error && <p className="error">{error}</p>}
       <div className="actions">
         <button
           type="button"
           className="primary"
           disabled={busy}
-          onClick={() => run(() => onSave({ tags, description, note }))}
+          onClick={() => run(() => onSave({ tags, description }))}
         >
           儲存變更
         </button>

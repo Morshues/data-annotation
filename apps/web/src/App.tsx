@@ -96,6 +96,7 @@ function App() {
         >
           標註
         </NavLink>
+        <NavLink to="/tags">標籤</NavLink>
       </nav>
 
       {error && (

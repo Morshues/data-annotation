@@ -8,7 +8,6 @@ export type NewAnnotationInput = {
   focus: Range
   tags: string[]
   description: string
-  note: string
 }
 
 type Props = {
@@ -29,7 +28,6 @@ export function NewAnnotationForm({
   const [focus, setFocus] = useState<Range | null>(null)
   const [tags, setTags] = useState<string[]>([])
   const [description, setDescription] = useState('')
-  const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -38,7 +36,7 @@ export function NewAnnotationForm({
     setBusy(true)
     setError(null)
     try {
-      await onSubmit({ focus, tags, description, note })
+      await onSubmit({ focus, tags, description })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
       setBusy(false)
@@ -68,14 +66,6 @@ export function NewAnnotationForm({
           rows={3}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-        />
-      </label>
-      <label className="field">
-        <span>備註</span>
-        <textarea
-          rows={3}
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
         />
       </label>
       {error && <p className="error">{error}</p>}

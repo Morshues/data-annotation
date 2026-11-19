@@ -45,7 +45,6 @@ function DocumentView({ documentId }: { documentId: number }) {
       textEnd: input.focus.end,
       tags: input.tags,
       description: input.description,
-      note: input.note,
     })
     setPendingContext(null)
     setActiveIds([created.id])

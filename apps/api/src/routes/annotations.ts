@@ -37,13 +37,11 @@ const createBody = z.object({
   textStart: z.number().int().min(0),
   textEnd: z.number().int().min(0),
   description: z.string().default(''),
-  note: z.string().default(''),
   tags: tagNames.default([]),
 })
 
 const updateBody = z.object({
   description: z.string().optional(),
-  note: z.string().optional(),
   tags: tagNames.optional(),
 })
 
@@ -72,9 +70,9 @@ annotationsRouter.get('/', async (req, res) => {
   }
   if (q) {
     conditions.push({
-      OR: (['text', 'context', 'description', 'note'] as const).map(
-        (field) => ({ [field]: { contains: q, mode: 'insensitive' } }),
-      ),
+      OR: (['text', 'context', 'description'] as const).map((field) => ({
+        [field]: { contains: q, mode: 'insensitive' },
+      })),
     })
   }
   const where: Prisma.AnnotationWhereInput = { AND: conditions }
@@ -135,7 +133,6 @@ annotationsRouter.post('/', async (req, res) => {
         docEnd: docRange.contextStart + textEnd,
       }),
       description: body.description,
-      note: body.note,
       tags: { connectOrCreate: connectTags(body.tags) },
     },
     include,
@@ -154,7 +151,6 @@ annotationsRouter.patch('/:id', async (req, res) => {
     where: { id },
     data: {
       description: body.description,
-      note: body.note,
       ...(body.tags && {
         tags: { set: [], connectOrCreate: connectTags(body.tags) },
       }),

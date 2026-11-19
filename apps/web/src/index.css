@@ -536,6 +536,15 @@ textarea {
   color: var(--muted);
 }
 
+.tags-pane {
+  max-width: 760px;
+}
+
+.tag-description {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
 .pagination {
   display: flex;
   align-items: center;

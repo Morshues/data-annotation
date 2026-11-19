@@ -6,6 +6,7 @@ import App from './App.tsx'
 import { AnnotationsPage } from './pages/AnnotationsPage.tsx'
 import { DocumentPage } from './pages/DocumentPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
+import { TagsPage } from './pages/TagsPage.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
             element={<AnnotationsPage />}
           />
           <Route path="annotations" element={<AnnotationsPage />} />
+          <Route path="tags" element={<TagsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

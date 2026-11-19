@@ -1,6 +1,7 @@
 export type Tag = {
   id: number
   name: string
+  description: string
 }
 
 export type TagWithCount = Tag & { annotationCount: number }
@@ -25,7 +26,6 @@ export type Annotation = {
   contextStart: number | null
   contextEnd: number | null
   description: string
-  note: string
   tags: Tag[]
   document?: { id: number; title: string } | null
   createdAt: string
@@ -60,13 +60,11 @@ export type NewAnnotation = {
   textEnd: number
   tags: string[]
   description: string
-  note: string
 }
 
 export type AnnotationChanges = {
   tags: string[]
   description: string
-  note: string
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -123,4 +121,7 @@ export const api = {
     request<void>(`/annotations/${id}`, { method: 'DELETE' }),
 
   listTags: () => request<TagWithCount[]>('/tags'),
+
+  updateTag: (id: number, data: { description: string }) =>
+    request<TagWithCount>(`/tags/${id}`, json('PATCH', data)),
 }
