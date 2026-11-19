@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildSegments, trimRange } from './segments'
+import { addRange, buildSegments, trimRange } from './segments'
 
 describe('buildSegments', () => {
   it('returns a single segment when there are no ranges', () => {
@@ -70,5 +70,47 @@ describe('trimRange', () => {
 
   it('returns null for whitespace-only ranges', () => {
     expect(trimRange('a  b', { start: 1, end: 3 })).toBeNull()
+  })
+})
+
+describe('addRange', () => {
+  it('inserts a separate range in order', () => {
+    expect(
+      addRange(
+        [
+          { start: 0, end: 2 },
+          { start: 8, end: 9 },
+        ],
+        { start: 4, end: 6 },
+      ),
+    ).toEqual([
+      { start: 0, end: 2 },
+      { start: 4, end: 6 },
+      { start: 8, end: 9 },
+    ])
+  })
+
+  it('merges overlapping and touching ranges', () => {
+    expect(
+      addRange(
+        [
+          { start: 0, end: 2 },
+          { start: 3, end: 5 },
+          { start: 7, end: 9 },
+          { start: 12, end: 14 },
+        ],
+        { start: 4, end: 7 },
+      ),
+    ).toEqual([
+      { start: 0, end: 2 },
+      { start: 3, end: 9 },
+      { start: 12, end: 14 },
+    ])
+  })
+
+  it('absorbs ranges it covers', () => {
+    expect(addRange([{ start: 2, end: 3 }], { start: 1, end: 5 })).toEqual([
+      { start: 1, end: 5 },
+    ])
   })
 })

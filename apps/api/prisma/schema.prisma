@@ -35,29 +35,43 @@ model Document {
 }
 
 model Annotation {
-  id           Int       @id @default(autoincrement())
+  id           Int              @id @default(autoincrement())
   // Kept on the annotation itself because the document is optional
   projectId    Int
-  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   documentId   Int?
-  document     Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
-  // Snapshot of the annotated text and its context, kept even if the document is gone
-  text         String
+  document     Document?        @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  // Snapshot of the context, kept even if the document is gone
   context      String
-  textStart    Int
-  textEnd      Int
-  // Positions in the document content, used for highlighting
-  docStart     Int?
-  docEnd       Int?
+  // Position of the context in the document content
   contextStart Int?
   contextEnd   Int?
-  description  String    @default("")
+  spans        AnnotationSpan[]
+  description  String           @default("")
   tags         Tag[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   @@index([projectId])
   @@index([documentId])
+}
+
+// One annotated piece of text; an annotation may have several, all inside its
+// context and never overlapping
+model AnnotationSpan {
+  id           Int        @id @default(autoincrement())
+  annotationId Int
+  annotation   Annotation @relation(fields: [annotationId], references: [id], onDelete: Cascade)
+  // Snapshot of the span text, kept even if the document is gone
+  text         String
+  // Offsets within the annotation's context
+  start        Int
+  end          Int
+  // Offsets in the document content, used for highlighting
+  docStart     Int?
+  docEnd       Int?
+
+  @@index([annotationId])
 }
 
 model Tag {

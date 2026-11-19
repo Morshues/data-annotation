@@ -1,3 +1,5 @@
+import type { Range } from './lib/segments'
+
 export type Project = {
   id: number
   name: string
@@ -24,17 +26,22 @@ export type DocumentSummary = {
   _count?: { annotations: number }
 }
 
+export type AnnotationSpan = {
+  id: number
+  text: string
+  start: number
+  end: number
+  docStart: number | null
+  docEnd: number | null
+}
+
 export type Annotation = {
   id: number
   documentId: number | null
-  text: string
   context: string
-  textStart: number
-  textEnd: number
-  docStart: number | null
-  docEnd: number | null
   contextStart: number | null
   contextEnd: number | null
+  spans: AnnotationSpan[]
   description: string
   tags: Tag[]
   document?: { id: number; title: string } | null
@@ -66,13 +73,13 @@ export type NewAnnotation = {
   documentId: number
   contextStart: number
   contextEnd: number
-  textStart: number
-  textEnd: number
+  spans: Range[]
   tags: string[]
   description: string
 }
 
 export type AnnotationChanges = {
+  spans: Range[]
   tags: string[]
   description: string
 }

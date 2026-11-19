@@ -61,8 +61,11 @@ documentsRouter.get('/:id', async (req, res) => {
     where: { id, projectId: projectIdOf(res) },
     include: {
       annotations: {
-        include: { tags: { orderBy: { name: 'asc' } } },
-        orderBy: { docStart: 'asc' },
+        include: {
+          spans: { orderBy: { start: 'asc' } },
+          tags: { orderBy: { name: 'asc' } },
+        },
+        orderBy: { contextStart: 'asc' },
       },
     },
   })

@@ -247,10 +247,7 @@ export function AnnotationsPage() {
                       編輯
                     </button>
                   </div>
-                  <ContextText
-                    context={a.context}
-                    focus={{ start: a.textStart, end: a.textEnd }}
-                  />
+                  <ContextText context={a.context} spans={a.spans} />
                   {a.tags.length > 0 && (
                     <div className="tags">
                       {a.tags.map((t) => (

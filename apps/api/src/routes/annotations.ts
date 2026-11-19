@@ -27,7 +27,28 @@ const listQuery = z.object({
   page: z.coerce.number().int().positive().default(1),
 })
 
-// Offsets: context range in the document, focus range within the context.
+// Span offsets within the context, sorted and checked for overlaps
+const spansInput = z
+  .array(
+    z.object({
+      start: z.number().int().min(0),
+      end: z.number().int().min(0),
+    }),
+  )
+  .min(1)
+  .max(50)
+  .transform((spans) => [...spans].sort((a, b) => a.start - b.start))
+  .superRefine((spans, ctx) => {
+    spans.forEach((span, i) => {
+      if (span.start >= span.end || (i > 0 && span.start < spans[i - 1].end)) {
+        ctx.addIssue({ code: 'custom', message: '標註範圍不正確' })
+      }
+    })
+  })
+
+type SpanInput = z.infer<typeof spansInput>[number]
+
+// Offsets: context range in the document, spans within the context.
 // With documentId the context is taken from the document; without it the
 // context text must be given directly.
 const createBody = z.object({
@@ -35,18 +56,19 @@ const createBody = z.object({
   contextStart: z.number().int().min(0).optional(),
   contextEnd: z.number().int().min(0).optional(),
   context: z.string().optional(),
-  textStart: z.number().int().min(0),
-  textEnd: z.number().int().min(0),
+  spans: spansInput,
   description: z.string().default(''),
   tags: tagNames.default([]),
 })
 
 const updateBody = z.object({
+  spans: spansInput.optional(),
   description: z.string().optional(),
   tags: tagNames.optional(),
 })
 
 const include = {
+  spans: { orderBy: { start: 'asc' } },
   tags: { orderBy: { name: 'asc' } },
   document: { select: { id: true, title: true } },
 } satisfies Prisma.AnnotationInclude
@@ -55,6 +77,27 @@ function connectTags(projectId: number, names: string[]) {
   return names.map((name) => ({
     where: { projectId_name: { projectId, name } },
     create: { projectId, name },
+  }))
+}
+
+// Snapshots each span's text, and maps it into the document when the context
+// came from one
+function buildSpans(
+  context: string,
+  contextStart: number | null,
+  spans: SpanInput[],
+) {
+  if (spans.some((span) => span.end > context.length)) {
+    throw new HttpError(400, '標註範圍不正確')
+  }
+  return spans.map(({ start, end }) => ({
+    text: context.slice(start, end),
+    start,
+    end,
+    ...(contextStart !== null && {
+      docStart: contextStart + start,
+      docEnd: contextStart + end,
+    }),
   }))
 }
 
@@ -76,7 +119,7 @@ annotationsRouter.get('/', async (req, res) => {
   }
   if (q) {
     conditions.push({
-      OR: (['text', 'context', 'description'] as const).map((field) => ({
+      OR: (['context', 'description'] as const).map((field) => ({
         [field]: { contains: q, mode: 'insensitive' },
       })),
     })
@@ -122,24 +165,15 @@ annotationsRouter.post('/', async (req, res) => {
     context = body.context
   }
 
-  const { textStart, textEnd } = body
-  if (textStart >= textEnd || textEnd > context.length) {
-    throw new HttpError(400, '標註範圍不正確')
-  }
+  const spans = buildSpans(context, docRange?.contextStart ?? null, body.spans)
 
   const annotation = await prisma.annotation.create({
     data: {
       projectId,
       documentId: body.documentId,
       context,
-      text: context.slice(textStart, textEnd),
-      textStart,
-      textEnd,
-      ...(docRange && {
-        ...docRange,
-        docStart: docRange.contextStart + textStart,
-        docEnd: docRange.contextStart + textEnd,
-      }),
+      ...docRange,
+      spans: { create: spans },
       description: body.description,
       tags: { connectOrCreate: connectTags(projectId, body.tags) },
     },
@@ -153,12 +187,21 @@ annotationsRouter.patch('/:id', async (req, res) => {
   const { id } = idParams.parse(req.params)
   const body = updateBody.parse(req.body)
 
-  const exists = await prisma.annotation.count({ where: { id, projectId } })
-  if (!exists) throw new HttpError(404, '找不到這個標註')
+  const current = await prisma.annotation.findFirst({
+    where: { id, projectId },
+    select: { context: true, contextStart: true },
+  })
+  if (!current) throw new HttpError(404, '找不到這個標註')
 
   const annotation = await prisma.annotation.update({
     where: { id },
     data: {
+      ...(body.spans && {
+        spans: {
+          deleteMany: {},
+          create: buildSpans(current.context, current.contextStart, body.spans),
+        },
+      }),
       description: body.description,
       ...(body.tags && {
         tags: { set: [], connectOrCreate: connectTags(projectId, body.tags) },

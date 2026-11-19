@@ -1,18 +1,27 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import type { Range } from '../lib/segments'
-import { trimRange } from '../lib/segments'
+import { buildSegments, trimRange } from '../lib/segments'
 import { getSelectionRange } from '../lib/selection'
 
 type Props = {
   context: string
-  focus: Range | null
-  // When given, the user can select the focus inside the context
+  spans: Range[]
+  // When given, the user can select ranges inside the context
   onSelectFocus?: (range: Range) => void
 }
 
-// Shows an annotation's context with its focus text emphasized.
-export function ContextText({ context, focus, onSelectFocus }: Props) {
+// Shows an annotation's context with its spans emphasized.
+export function ContextText({ context, spans, onSelectFocus }: Props) {
   const ref = useRef<HTMLDivElement>(null)
+
+  const segments = useMemo(
+    () =>
+      buildSegments(
+        context.length,
+        spans.map((span) => ({ ...span, key: true })),
+      ),
+    [context, spans],
+  )
 
   function handleMouseUp() {
     if (!onSelectFocus || !ref.current) return
@@ -30,15 +39,16 @@ export function ContextText({ context, focus, onSelectFocus }: Props) {
       className={`context-text${onSelectFocus ? ' selectable' : ''}`}
       onMouseUp={handleMouseUp}
     >
-      {focus ? (
-        <>
-          {context.slice(0, focus.start)}
-          <mark className="focus">{context.slice(focus.start, focus.end)}</mark>
-          {context.slice(focus.end)}
-        </>
-      ) : (
-        context
-      )}
+      {segments.map((seg) => {
+        const text = context.slice(seg.start, seg.end)
+        return seg.keys.length > 0 ? (
+          <mark key={seg.start} className="focus">
+            {text}
+          </mark>
+        ) : (
+          text
+        )
+      })}
     </div>
   )
 }

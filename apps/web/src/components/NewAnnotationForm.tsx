@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import type { Tag } from '../api'
 import type { Range } from '../lib/segments'
-import { ContextText } from './ContextText'
+import { SpanPicker } from './SpanPicker'
 import { TagInput } from './TagInput'
 
 export type NewAnnotationInput = {
-  focus: Range
+  spans: Range[]
   tags: string[]
   description: string
 }
@@ -17,7 +17,7 @@ type Props = {
   onCancel: () => void
 }
 
-// Step 2 of annotating: pick the focus inside the selected context and fill in
+// Step 2 of annotating: pick the spans inside the selected context and fill in
 // the annotation data. The parent remounts this form when the context changes.
 export function NewAnnotationForm({
   context,
@@ -25,18 +25,18 @@ export function NewAnnotationForm({
   onSubmit,
   onCancel,
 }: Props) {
-  const [focus, setFocus] = useState<Range | null>(null)
+  const [spans, setSpans] = useState<Range[]>([])
   const [tags, setTags] = useState<string[]>([])
   const [description, setDescription] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   async function submit() {
-    if (!focus) return
+    if (spans.length === 0) return
     setBusy(true)
     setError(null)
     try {
-      await onSubmit({ focus, tags, description })
+      await onSubmit({ spans, tags, description })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
       setBusy(false)
@@ -46,12 +46,7 @@ export function NewAnnotationForm({
   return (
     <div className="editor">
       <h2>新增標註</h2>
-      <p className="hint">
-        {focus
-          ? '已選好重點。要換的話，在下面重新拖選。'
-          : '在下面的上下文中拖選要標註的重點。'}
-      </p>
-      <ContextText context={context} focus={focus} onSelectFocus={setFocus} />
+      <SpanPicker context={context} spans={spans} onChange={setSpans} />
       <label className="field">
         <span>標籤</span>
         <TagInput
@@ -73,7 +68,7 @@ export function NewAnnotationForm({
         <button
           type="button"
           className="primary"
-          disabled={!focus || busy}
+          disabled={spans.length === 0 || busy}
           onClick={submit}
         >
           儲存標註

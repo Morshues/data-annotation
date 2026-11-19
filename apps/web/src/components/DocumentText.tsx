@@ -30,9 +30,11 @@ export function DocumentText({
   const ref = useRef<HTMLDivElement>(null)
 
   const segments = useMemo(() => {
-    const ranges: KeyedRange<Key>[] = annotations
-      .filter((a) => a.docStart !== null && a.docEnd !== null)
-      .map((a) => ({ start: a.docStart!, end: a.docEnd!, key: a.id }))
+    const ranges: KeyedRange<Key>[] = annotations.flatMap((a) =>
+      a.spans
+        .filter((s) => s.docStart !== null && s.docEnd !== null)
+        .map((s) => ({ start: s.docStart!, end: s.docEnd!, key: a.id })),
+    )
     if (pendingContext) ranges.push({ ...pendingContext, key: CONTEXT_KEY })
     return buildSegments(content.length, ranges)
   }, [content, annotations, pendingContext])

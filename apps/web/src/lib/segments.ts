@@ -42,6 +42,22 @@ export function buildSegments<K>(
   return segments
 }
 
+// Adds a range to sorted, non-overlapping ranges, merging it with any range
+// it overlaps or touches. Returns a new sorted array.
+export function addRange(ranges: Range[], range: Range): Range[] {
+  let { start, end } = range
+  const rest: Range[] = []
+  for (const r of ranges) {
+    if (r.end < start || end < r.start) {
+      rest.push(r)
+    } else {
+      start = Math.min(start, r.start)
+      end = Math.max(end, r.end)
+    }
+  }
+  return [...rest, { start, end }].sort((a, b) => a.start - b.start)
+}
+
 // Shrinks a range so it does not start or end with whitespace.
 export function trimRange(text: string, range: Range): Range | null {
   let { start, end } = range

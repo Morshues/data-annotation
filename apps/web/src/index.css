@@ -364,6 +364,28 @@ textarea {
   font-weight: 700;
 }
 
+.span-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.span-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  padding: 0.05rem 0.3rem 0.05rem 0.55rem;
+  border-radius: 4px;
+  background: var(--focus);
+  font-size: 0.875rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .field {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Annotation, AnnotationChanges, Tag } from '../api'
-import { ContextText } from './ContextText'
+import { SpanPicker } from './SpanPicker'
 import { TagInput } from './TagInput'
 
 type Props = {
@@ -11,7 +11,8 @@ type Props = {
   onClose?: () => void
 }
 
-// Edits the tags and description of an existing annotation.
+// Edits the spans, tags and description of an existing annotation. The
+// context itself cannot change.
 export function AnnotationEditor({
   annotation,
   tagSuggestions,
@@ -19,6 +20,9 @@ export function AnnotationEditor({
   onDelete,
   onClose,
 }: Props) {
+  const [spans, setSpans] = useState(
+    annotation.spans.map(({ start, end }) => ({ start, end })),
+  )
   const [tags, setTags] = useState(annotation.tags.map((t) => t.name))
   const [description, setDescription] = useState(annotation.description)
   const [busy, setBusy] = useState(false)
@@ -38,9 +42,10 @@ export function AnnotationEditor({
 
   return (
     <div className="editor">
-      <ContextText
+      <SpanPicker
         context={annotation.context}
-        focus={{ start: annotation.textStart, end: annotation.textEnd }}
+        spans={spans}
+        onChange={setSpans}
       />
       <label className="field">
         <span>標籤</span>
@@ -63,8 +68,8 @@ export function AnnotationEditor({
         <button
           type="button"
           className="primary"
-          disabled={busy}
-          onClick={() => run(() => onSave({ tags, description }))}
+          disabled={busy || spans.length === 0}
+          onClick={() => run(() => onSave({ spans, tags, description }))}
         >
           儲存變更
         </button>
@@ -78,7 +83,8 @@ export function AnnotationEditor({
           className="danger"
           disabled={busy}
           onClick={() => {
-            if (confirm(`確定要刪除「${annotation.text}」這個標註嗎？`)) {
+            const text = annotation.spans.map((s) => s.text).join('、')
+            if (confirm(`確定要刪除「${text}」這個標註嗎？`)) {
               void run(onDelete)
             }
           }}
