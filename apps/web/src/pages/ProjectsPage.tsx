@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import type { Project, ProjectChanges } from '../api'
 import { api } from '../api'
 import { projectPath, useRoot } from '../layout'
+import { useSubmit } from '../lib/use-submit'
 
 export function ProjectsPage() {
   const navigate = useNavigate()
@@ -54,25 +55,6 @@ export function ProjectsPage() {
 }
 
 type ProjectFields = { name: string; description: string }
-
-function useSubmit<T>(action: (value: T) => Promise<void>) {
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  async function submit(value: T) {
-    setBusy(true)
-    setError(null)
-    try {
-      await action(value)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return { busy, error, submit }
-}
 
 function NewProjectForm({
   onCreate,

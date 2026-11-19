@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import type { Tag } from '../api'
+import { useLayout } from '../layout'
 
 type Props = {
   value: string[]
@@ -10,6 +11,9 @@ type Props = {
 export function TagInput({ value, suggestions, onChange }: Props) {
   const [draft, setDraft] = useState('')
   const listId = useId()
+  const { tagGroups } = useLayout()
+  const groupName = (tag: Tag) =>
+    tagGroups.find((g) => g.id === tag.groupId)?.name
 
   function add(raw: string) {
     const name = raw.trim()
@@ -57,7 +61,7 @@ export function TagInput({ value, suggestions, onChange }: Props) {
         {suggestions
           .filter((t) => !value.includes(t.name))
           .map((t) => (
-            <option key={t.id} value={t.name} />
+            <option key={t.id} value={t.name} label={groupName(t)} />
           ))}
       </datalist>
     </div>

@@ -1,5 +1,5 @@
 import { useOutletContext } from 'react-router'
-import type { DocumentSummary, Project, TagWithCount } from './api'
+import type { DocumentSummary, Project, TagGroup, TagWithCount } from './api'
 
 // Provided by App to the pages outside a project
 export type RootContext = {
@@ -16,8 +16,10 @@ export type LayoutContext = {
   projectId: number
   documents: DocumentSummary[] | null
   tags: TagWithCount[]
+  tagGroups: TagGroup[]
   currentDocumentId: number | null
   refreshDocuments: () => Promise<void>
+  // Reloads both the tags and the tag groups
   refreshTags: () => Promise<void>
 }
 

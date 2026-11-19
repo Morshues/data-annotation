@@ -5,6 +5,7 @@ import { api } from '../api'
 import { projectPath, useLayout } from '../layout'
 import { AnnotationEditor } from '../components/AnnotationEditor'
 import { ContextText } from '../components/ContextText'
+import { groupTags } from '../lib/tag-groups'
 
 export function AnnotationsPage() {
   const params = useParams()
@@ -12,6 +13,7 @@ export function AnnotationsPage() {
   const {
     projectId,
     tags,
+    tagGroups,
     documents,
     currentDocumentId,
     refreshTags,
@@ -85,14 +87,30 @@ export function AnnotationsPage() {
     }
   }, [projectId, tagsKey, tagMode, q, documentId, page, reloadToken])
 
+  function setSelectedTags(ids: number[]) {
+    updateParams({ tags: ids.join(',') })
+  }
+
   function toggleTag(id: number) {
-    const next = selectedTags.includes(id)
-      ? selectedTags.filter((t) => t !== id)
-      : [...selectedTags, id]
-    updateParams({ tags: next.join(',') })
+    setSelectedTags(
+      selectedTags.includes(id)
+        ? selectedTags.filter((t) => t !== id)
+        : [...selectedTags, id],
+    )
+  }
+
+  // Selects every tag of a group, or clears them when all are selected
+  function toggleGroup(ids: number[]) {
+    const allSelected = ids.every((id) => selectedTags.includes(id))
+    setSelectedTags(
+      allSelected
+        ? selectedTags.filter((id) => !ids.includes(id))
+        : [...new Set([...selectedTags, ...ids])],
+    )
   }
 
   const usedTags = tags.filter((t) => t.annotationCount > 0)
+  const tagSections = groupTags(usedTags, tagGroups)
   const currentDocument = documents?.find((d) => d.id === currentDocumentId)
   const totalPages = result ? Math.ceil(result.total / result.pageSize) : 0
   const query = searchParams.toString()
@@ -137,26 +155,54 @@ export function AnnotationsPage() {
           {usedTags.length === 0 ? (
             <p className="muted">還沒有任何標籤。</p>
           ) : (
-            <ul className="tag-filter">
-              {usedTags.map((t) => (
-                <li key={t.id}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={selectedTags.includes(t.id)}
-                      onChange={() => toggleTag(t.id)}
-                    />
-                    <span
-                      className="tag-filter-name"
-                      title={t.description || undefined}
-                    >
-                      {t.name}
-                    </span>
-                    <span className="count">{t.annotationCount}</span>
-                  </label>
-                </li>
-              ))}
-            </ul>
+            tagSections.map(({ group, tags: sectionTags }) => {
+              const ids = sectionTags.map((t) => t.id)
+              const allSelected = ids.every((id) => selectedTags.includes(id))
+              return (
+                <div
+                  key={group?.id ?? 'ungrouped'}
+                  className="tag-filter-group"
+                >
+                  {/* With no groups at all, a lone "ungrouped" heading is noise */}
+                  {tagGroups.length > 0 && (
+                    <div className="tag-filter-heading">
+                      <span title={group?.description || undefined}>
+                        {group?.name ?? '未分組'}
+                      </span>
+                      {group && (
+                        <button
+                          type="button"
+                          className="link"
+                          onClick={() => toggleGroup(ids)}
+                        >
+                          {allSelected ? '取消' : '全選'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <ul className="tag-filter">
+                    {sectionTags.map((t) => (
+                      <li key={t.id}>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={selectedTags.includes(t.id)}
+                            onChange={() => toggleTag(t.id)}
+                          />
+                          <span
+                            className="tag-filter-name"
+                            title={t.description || undefined}
+                          >
+                            {t.name}
+                          </span>
+                          <span className="count">{t.annotationCount}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })
           )}
           {selectedTags.length > 0 && (
             <button

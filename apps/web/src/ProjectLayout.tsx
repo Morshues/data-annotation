@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { NavLink, Outlet, useMatch, useNavigate, useParams } from 'react-router'
-import type { DocumentSummary, TagWithCount } from './api'
+import type { DocumentSummary, TagGroup, TagWithCount } from './api'
 import { api } from './api'
 import { ImportButton } from './components/ImportButton'
 import type { LayoutContext } from './layout'
@@ -19,6 +19,7 @@ function ProjectView({ projectId }: { projectId: number }) {
 
   const [documents, setDocuments] = useState<DocumentSummary[] | null>(null)
   const [tags, setTags] = useState<TagWithCount[]>([])
+  const [tagGroups, setTagGroups] = useState<TagGroup[]>([])
   const [error, setError] = useState<string | null>(null)
   // Remembered so "all annotations" can still link back to the last document
   const [lastDocumentId, setLastDocumentId] = useState<number | null>(null)
@@ -35,20 +36,28 @@ function ProjectView({ projectId }: { projectId: number }) {
     [projectId],
   )
   const refreshTags = useCallback(
-    () => api.listTags(projectId).then(setTags, showError),
+    () =>
+      Promise.all([api.listTags(projectId), api.listTagGroups(projectId)]).then(
+        ([tags, groups]) => {
+          setTags(tags)
+          setTagGroups(groups)
+        },
+        showError,
+      ),
     [projectId],
   )
 
   useEffect(() => {
     rememberProject(projectId)
     api.listDocuments(projectId).then(setDocuments, showError)
-    api.listTags(projectId).then(setTags, showError)
-  }, [projectId])
+    void refreshTags()
+  }, [projectId, refreshTags])
 
   const context: LayoutContext = {
     projectId,
     documents,
     tags,
+    tagGroups,
     currentDocumentId,
     refreshDocuments,
     refreshTags,

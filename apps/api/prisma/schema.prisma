@@ -19,6 +19,7 @@ model Project {
   documents   Document[]
   annotations Annotation[]
   tags        Tag[]
+  tagGroups   TagGroup[]
 }
 
 model Document {
@@ -74,13 +75,30 @@ model AnnotationSpan {
   @@index([annotationId])
 }
 
+// Organizes tags for display, e.g. 主詞 and 受詞 under 詞性
+model TagGroup {
+  id          Int      @id @default(autoincrement())
+  projectId   Int
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  tags        Tag[]
+
+  @@unique([projectId, name])
+}
+
 model Tag {
   id          Int          @id @default(autoincrement())
   projectId   Int
   project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  // null when the tag is not in any group
+  groupId     Int?
+  group       TagGroup?    @relation(fields: [groupId], references: [id], onDelete: SetNull)
   name        String
   description String       @default("")
   annotations Annotation[]
 
   @@unique([projectId, name])
+  @@index([groupId])
 }

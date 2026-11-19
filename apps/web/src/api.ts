@@ -12,9 +12,21 @@ export type ProjectChanges = { name?: string; description?: string }
 
 export type Tag = {
   id: number
+  groupId: number | null
   name: string
   description: string
 }
+
+export type TagGroup = {
+  id: number
+  name: string
+  description: string
+  createdAt: string
+}
+
+export type TagGroupFields = { name: string; description: string }
+
+export type TagChanges = { description?: string; groupId?: number | null }
 
 export type TagWithCount = Tag & { annotationCount: number }
 
@@ -168,9 +180,31 @@ export const api = {
   listTags: (projectId: number) =>
     request<TagWithCount[]>(scoped(projectId, '/tags')),
 
-  updateTag: (projectId: number, id: number, data: { description: string }) =>
+  createTag: (
+    projectId: number,
+    data: { name: string; groupId: number | null },
+  ) => request<TagWithCount>(scoped(projectId, '/tags'), json('POST', data)),
+
+  updateTag: (projectId: number, id: number, data: TagChanges) =>
     request<TagWithCount>(
       scoped(projectId, `/tags/${id}`),
       json('PATCH', data),
     ),
+
+  listTagGroups: (projectId: number) =>
+    request<TagGroup[]>(scoped(projectId, '/tag-groups')),
+
+  createTagGroup: (projectId: number, data: TagGroupFields) =>
+    request<TagGroup>(scoped(projectId, '/tag-groups'), json('POST', data)),
+
+  updateTagGroup: (projectId: number, id: number, data: TagGroupFields) =>
+    request<TagGroup>(
+      scoped(projectId, `/tag-groups/${id}`),
+      json('PATCH', data),
+    ),
+
+  deleteTagGroup: (projectId: number, id: number) =>
+    request<void>(scoped(projectId, `/tag-groups/${id}`), {
+      method: 'DELETE',
+    }),
 }

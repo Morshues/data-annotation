@@ -5,6 +5,7 @@ import type { Prisma } from '../generated/prisma/client.js'
 import { annotationsRouter } from './annotations.js'
 import { documentsRouter } from './documents.js'
 import { loadProject, projectIdOf } from './project-scope.js'
+import { tagGroupsRouter } from './tag-groups.js'
 import { tagsRouter } from './tags.js'
 
 const name = z.string().trim().min(1).max(100)
@@ -30,6 +31,7 @@ projectsRouter.use('/:projectId/documents', documentsRouter)
 projectsRouter.use(express.json({ limit: '1mb' }))
 projectsRouter.use('/:projectId/annotations', annotationsRouter)
 projectsRouter.use('/:projectId/tags', tagsRouter)
+projectsRouter.use('/:projectId/tag-groups', tagGroupsRouter)
 
 projectsRouter.get('/', async (_req, res) => {
   const projects = await prisma.project.findMany({
