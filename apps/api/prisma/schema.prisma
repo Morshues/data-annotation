@@ -9,3 +9,41 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Document {
+  id          Int          @id @default(autoincrement())
+  title       String
+  filename    String
+  content     String
+  createdAt   DateTime     @default(now())
+  annotations Annotation[]
+}
+
+model Annotation {
+  id           Int       @id @default(autoincrement())
+  documentId   Int?
+  document     Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  // Snapshot of the annotated text and its context, kept even if the document is gone
+  text         String
+  context      String
+  textStart    Int
+  textEnd      Int
+  // Positions in the document content, used for highlighting
+  docStart     Int?
+  docEnd       Int?
+  contextStart Int?
+  contextEnd   Int?
+  description  String    @default("")
+  note         String    @default("")
+  tags         Tag[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([documentId])
+}
+
+model Tag {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  annotations Annotation[]
+}

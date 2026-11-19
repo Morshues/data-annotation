@@ -1,6 +1,17 @@
 # Corpus Analysis
 
-給語言學家使用的語料分析網站（Corpus Analysis Web Application）。目前只有基礎專案架構，還沒有業務功能。
+給語言學家使用的語料分析網站（Corpus Analysis Web Application）。
+
+## 功能
+
+- **上傳文件**：上傳 UTF-8 編碼的 `.txt` 或 `.md` 檔案作為全文，上限 5 MB。目前不能編輯或刪除文件。
+- **全文標註（兩段式）**：
+  1. 在全文上拖選一段文字，作為上下文。
+  2. 在右側顯示的上下文中，再拖選要標註的重點。
+  3. 加上標籤（可以有多個）、描述和備註後儲存。
+- **標註瀏覽**：瀏覽所有標註，可以用標籤（任一 OR／全部 AND）和關鍵字篩選，也可以只看目前文件的標註。
+
+每個標註都會另外保存自己的重點和上下文文字，所以就算對應的文件不存在，標註仍然完整。
 
 ## Tech Stack
 
@@ -51,7 +62,13 @@ apps/
    cp apps/api/.env.example apps/api/.env
    ```
 
-4. 啟動前端與後端：
+4. 建立資料表：
+
+   ```sh
+   pnpm --filter @corpus/api exec prisma migrate deploy
+   ```
+
+5. 啟動前端與後端：
 
    ```sh
    pnpm dev
@@ -62,7 +79,7 @@ apps/
 
    開發時，前端的 `/api` 請求會由 Vite proxy 轉給後端。
 
-5. 確認服務狀態：
+6. 確認服務狀態：
 
    ```sh
    curl http://localhost:4000/api/health
@@ -106,7 +123,7 @@ apps/
    curl http://localhost:8080/api/health
    ```
 
-`web` 用 nginx 提供前端靜態檔，並把 `/api` 轉給 `api`。只有 `web` 會對外開放 port，`db` 和 `api` 只在 Docker 內部網路使用。資料庫的資料存在 `db-data` volume。
+`web` 用 nginx 提供前端靜態檔，並把 `/api` 轉給 `api`。只有 `web` 會對外開放 port，`db` 和 `api` 只在 Docker 內部網路使用。資料庫的資料存在 `db-data` volume。`api` 每次啟動時會先執行 `prisma migrate deploy`，套用還沒執行的 migration。
 
 停止服務：
 
@@ -117,13 +134,15 @@ docker compose down -v     # 連同資料庫資料一起刪除
 
 ## 常用指令
 
-| 指令               | 說明                           |
-| ------------------ | ------------------------------ |
-| `pnpm dev`         | 同時啟動前端與後端的開發伺服器 |
-| `pnpm build`       | Build 所有 apps                |
-| `pnpm lint`        | 執行 oxlint                    |
-| `pnpm format`      | 用 Prettier 格式化程式碼       |
-| `pnpm db:generate` | 重新產生 Prisma Client         |
+| 指令                            | 說明                                                                               |
+| ------------------------------- | ---------------------------------------------------------------------------------- |
+| `pnpm dev`                      | 同時啟動前端與後端的開發伺服器                                                     |
+| `pnpm build`                    | Build 所有 apps                                                                    |
+| `pnpm lint`                     | 執行 oxlint                                                                        |
+| `pnpm format`                   | 用 Prettier 格式化程式碼                                                           |
+| `pnpm test`                     | 執行單元測試（Vitest）                                                             |
+| `pnpm db:generate`              | 重新產生 Prisma Client                                                             |
+| `pnpm db:migrate --name <名稱>` | 修改 `schema.prisma` 後，建立並套用新的 migration；之後要再執行 `pnpm db:generate` |
 
 ## 環境變數
 

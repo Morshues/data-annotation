@@ -11,7 +11,9 @@
     "lint": "pnpm -r lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:generate": "pnpm --filter @corpus/api db:generate"
+    "db:generate": "pnpm --filter @corpus/api db:generate",
+    "test": "pnpm -r test",
+    "db:migrate": "pnpm --filter @corpus/api exec prisma migrate dev"
   },
   "devDependencies": {
     "prettier": "^3.10.1"
