@@ -16,7 +16,7 @@ export function DocumentPage() {
 }
 
 function DocumentView({ documentId }: { documentId: number }) {
-  const { tags, refreshTags, refreshDocuments } = useLayout()
+  const { projectId, tags, refreshTags, refreshDocuments } = useLayout()
 
   const [document, setDocument] = useState<DocumentDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -27,17 +27,17 @@ function DocumentView({ documentId }: { documentId: number }) {
     setError(err instanceof Error ? err.message : String(err))
 
   useEffect(() => {
-    api.getDocument(documentId).then(setDocument, showError)
-  }, [documentId])
+    api.getDocument(projectId, documentId).then(setDocument, showError)
+  }, [projectId, documentId])
 
-  const reload = () => api.getDocument(documentId).then(setDocument)
+  const reload = () => api.getDocument(projectId, documentId).then(setDocument)
 
   if (error) return <p className="error">{error}</p>
   if (!document) return <p className="muted">載入中…</p>
 
   async function createAnnotation(input: NewAnnotationInput) {
     if (!pendingContext) return
-    const created = await api.createAnnotation({
+    const created = await api.createAnnotation(projectId, {
       documentId,
       contextStart: pendingContext.start,
       contextEnd: pendingContext.end,
@@ -52,12 +52,12 @@ function DocumentView({ documentId }: { documentId: number }) {
   }
 
   async function updateAnnotation(id: number, changes: AnnotationChanges) {
-    await api.updateAnnotation(id, changes)
+    await api.updateAnnotation(projectId, id, changes)
     await Promise.all([reload(), refreshTags()])
   }
 
   async function deleteAnnotation(id: number) {
-    await api.deleteAnnotation(id)
+    await api.deleteAnnotation(projectId, id)
     setActiveIds((ids) => ids.filter((i) => i !== id))
     await Promise.all([reload(), refreshTags(), refreshDocuments()])
   }

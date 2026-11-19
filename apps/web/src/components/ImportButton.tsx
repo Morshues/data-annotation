@@ -9,7 +9,7 @@ const sources = [
   { key: 'paste', label: '貼上文字', Component: PasteImport },
 ]
 
-export function ImportButton({ onImported }: ImportSourceProps) {
+export function ImportButton({ projectId, onImported }: ImportSourceProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   // Content is only mounted while open, so every import starts from a blank form
   const [open, setOpen] = useState(false)
@@ -59,6 +59,7 @@ export function ImportButton({ onImported }: ImportSourceProps) {
               // Kept mounted so switching tabs does not lose what was entered
               <div key={key} role="tabpanel" hidden={key !== activeKey}>
                 <Component
+                  projectId={projectId}
                   onImported={async (document) => {
                     await onImported(document)
                     close()

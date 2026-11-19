@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../db.js'
 import type { Prisma } from '../generated/prisma/client.js'
 import { HttpError } from '../http-error.js'
+import { projectIdOf } from './project-scope.js'
 
 const idParams = z.object({ id: z.coerce.number().int().positive() })
 
@@ -21,10 +22,14 @@ function withCount({
   return { ...tag, annotationCount: _count.annotations }
 }
 
-export const tagsRouter = Router()
+export const tagsRouter = Router({ mergeParams: true })
 
 tagsRouter.get('/', async (_req, res) => {
-  const tags = await prisma.tag.findMany({ include, orderBy: { name: 'asc' } })
+  const tags = await prisma.tag.findMany({
+    where: { projectId: projectIdOf(res) },
+    include,
+    orderBy: { name: 'asc' },
+  })
   res.json(tags.map(withCount))
 })
 
@@ -32,7 +37,9 @@ tagsRouter.patch('/:id', async (req, res) => {
   const { id } = idParams.parse(req.params)
   const body = updateBody.parse(req.body)
 
-  const exists = await prisma.tag.count({ where: { id } })
+  const exists = await prisma.tag.count({
+    where: { id, projectId: projectIdOf(res) },
+  })
   if (!exists) throw new HttpError(404, '找不到這個標籤')
 
   const tag = await prisma.tag.update({

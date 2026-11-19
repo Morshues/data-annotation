@@ -1,3 +1,13 @@
+export type Project = {
+  id: number
+  name: string
+  description: string
+  createdAt: string
+  _count: { documents: number; annotations: number }
+}
+
+export type ProjectChanges = { name?: string; description?: string }
+
 export type Tag = {
   id: number
   name: string
@@ -86,24 +96,44 @@ function json(method: string, body: unknown): RequestInit {
   }
 }
 
+// Paths of everything that lives inside a project
+const scoped = (projectId: number, path: string) =>
+  `/projects/${projectId}${path}`
+
 export const api = {
-  listDocuments: () => request<DocumentSummary[]>('/documents'),
+  listProjects: () => request<Project[]>('/projects'),
 
-  getDocument: (id: number) => request<DocumentDetail>(`/documents/${id}`),
+  createProject: (data: { name: string; description: string }) =>
+    request<Project>('/projects', json('POST', data)),
 
-  uploadDocument: (file: File) => {
+  updateProject: (projectId: number, data: ProjectChanges) =>
+    request<Project>(`/projects/${projectId}`, json('PATCH', data)),
+
+  listDocuments: (projectId: number) =>
+    request<DocumentSummary[]>(scoped(projectId, '/documents')),
+
+  getDocument: (projectId: number, id: number) =>
+    request<DocumentDetail>(scoped(projectId, `/documents/${id}`)),
+
+  uploadDocument: (projectId: number, file: File) => {
     const form = new FormData()
     form.append('file', file)
-    return request<DocumentSummary>('/documents', {
+    return request<DocumentSummary>(scoped(projectId, '/documents'), {
       method: 'POST',
       body: form,
     })
   },
 
-  createTextDocument: (data: { title: string; content: string }) =>
-    request<DocumentSummary>('/documents/text', json('POST', data)),
+  createTextDocument: (
+    projectId: number,
+    data: { title: string; content: string },
+  ) =>
+    request<DocumentSummary>(
+      scoped(projectId, '/documents/text'),
+      json('POST', data),
+    ),
 
-  listAnnotations: (query: AnnotationQuery) => {
+  listAnnotations: (projectId: number, query: AnnotationQuery) => {
     const params = new URLSearchParams({
       tagMode: query.tagMode,
       page: String(query.page),
@@ -111,20 +141,29 @@ export const api = {
     if (query.tags.length > 0) params.set('tags', query.tags.join(','))
     if (query.q) params.set('q', query.q)
     if (query.documentId) params.set('documentId', String(query.documentId))
-    return request<AnnotationPage>(`/annotations?${params}`)
+    return request<AnnotationPage>(scoped(projectId, `/annotations?${params}`))
   },
 
-  createAnnotation: (data: NewAnnotation) =>
-    request<Annotation>('/annotations', json('POST', data)),
+  createAnnotation: (projectId: number, data: NewAnnotation) =>
+    request<Annotation>(scoped(projectId, '/annotations'), json('POST', data)),
 
-  updateAnnotation: (id: number, data: AnnotationChanges) =>
-    request<Annotation>(`/annotations/${id}`, json('PATCH', data)),
+  updateAnnotation: (projectId: number, id: number, data: AnnotationChanges) =>
+    request<Annotation>(
+      scoped(projectId, `/annotations/${id}`),
+      json('PATCH', data),
+    ),
 
-  deleteAnnotation: (id: number) =>
-    request<void>(`/annotations/${id}`, { method: 'DELETE' }),
+  deleteAnnotation: (projectId: number, id: number) =>
+    request<void>(scoped(projectId, `/annotations/${id}`), {
+      method: 'DELETE',
+    }),
 
-  listTags: () => request<TagWithCount[]>('/tags'),
+  listTags: (projectId: number) =>
+    request<TagWithCount[]>(scoped(projectId, '/tags')),
 
-  updateTag: (id: number, data: { description: string }) =>
-    request<TagWithCount>(`/tags/${id}`, json('PATCH', data)),
+  updateTag: (projectId: number, id: number, data: { description: string }) =>
+    request<TagWithCount>(
+      scoped(projectId, `/tags/${id}`),
+      json('PATCH', data),
+    ),
 }

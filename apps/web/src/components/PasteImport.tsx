@@ -13,7 +13,7 @@ function guessTitle(text: string) {
   return line ? [...line].slice(0, TITLE_GUESS_LENGTH).join('') : ''
 }
 
-export function PasteImport({ onImported }: ImportSourceProps) {
+export function PasteImport({ projectId, onImported }: ImportSourceProps) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [busy, setBusy] = useState(false)
@@ -43,7 +43,9 @@ export function PasteImport({ onImported }: ImportSourceProps) {
     setBusy(true)
     setError(null)
     try {
-      await onImported(await api.createTextDocument({ title, content }))
+      await onImported(
+        await api.createTextDocument(projectId, { title, content }),
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {

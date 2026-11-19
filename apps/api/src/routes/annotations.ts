@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '../db.js'
 import type { Prisma } from '../generated/prisma/client.js'
 import { HttpError } from '../http-error.js'
+import { projectIdOf } from './project-scope.js'
 
 const PAGE_SIZE = 50
 
@@ -50,16 +51,21 @@ const include = {
   document: { select: { id: true, title: true } },
 } satisfies Prisma.AnnotationInclude
 
-function connectTags(names: string[]) {
-  return names.map((name) => ({ where: { name }, create: { name } }))
+function connectTags(projectId: number, names: string[]) {
+  return names.map((name) => ({
+    where: { projectId_name: { projectId, name } },
+    create: { projectId, name },
+  }))
 }
 
-export const annotationsRouter = Router()
+export const annotationsRouter = Router({ mergeParams: true })
 
 annotationsRouter.get('/', async (req, res) => {
   const { tags, tagMode, q, documentId, page } = listQuery.parse(req.query)
 
-  const conditions: Prisma.AnnotationWhereInput[] = []
+  const conditions: Prisma.AnnotationWhereInput[] = [
+    { projectId: projectIdOf(res) },
+  ]
   if (documentId) conditions.push({ documentId })
   if (tags.length > 0) {
     if (tagMode === 'and') {
@@ -91,6 +97,7 @@ annotationsRouter.get('/', async (req, res) => {
 })
 
 annotationsRouter.post('/', async (req, res) => {
+  const projectId = projectIdOf(res)
   const body = createBody.parse(req.body)
 
   let context: string
@@ -100,8 +107,8 @@ annotationsRouter.post('/', async (req, res) => {
     if (contextStart === undefined || contextEnd === undefined) {
       throw new HttpError(400, '缺少上下文範圍')
     }
-    const document = await prisma.document.findUnique({
-      where: { id: body.documentId },
+    const document = await prisma.document.findFirst({
+      where: { id: body.documentId, projectId },
       select: { content: true },
     })
     if (!document) throw new HttpError(404, '找不到這份文件')
@@ -122,6 +129,7 @@ annotationsRouter.post('/', async (req, res) => {
 
   const annotation = await prisma.annotation.create({
     data: {
+      projectId,
       documentId: body.documentId,
       context,
       text: context.slice(textStart, textEnd),
@@ -133,7 +141,7 @@ annotationsRouter.post('/', async (req, res) => {
         docEnd: docRange.contextStart + textEnd,
       }),
       description: body.description,
-      tags: { connectOrCreate: connectTags(body.tags) },
+      tags: { connectOrCreate: connectTags(projectId, body.tags) },
     },
     include,
   })
@@ -141,10 +149,11 @@ annotationsRouter.post('/', async (req, res) => {
 })
 
 annotationsRouter.patch('/:id', async (req, res) => {
+  const projectId = projectIdOf(res)
   const { id } = idParams.parse(req.params)
   const body = updateBody.parse(req.body)
 
-  const exists = await prisma.annotation.count({ where: { id } })
+  const exists = await prisma.annotation.count({ where: { id, projectId } })
   if (!exists) throw new HttpError(404, '找不到這個標註')
 
   const annotation = await prisma.annotation.update({
@@ -152,7 +161,7 @@ annotationsRouter.patch('/:id', async (req, res) => {
     data: {
       description: body.description,
       ...(body.tags && {
-        tags: { set: [], connectOrCreate: connectTags(body.tags) },
+        tags: { set: [], connectOrCreate: connectTags(projectId, body.tags) },
       }),
     },
     include,
@@ -162,7 +171,9 @@ annotationsRouter.patch('/:id', async (req, res) => {
 
 annotationsRouter.delete('/:id', async (req, res) => {
   const { id } = idParams.parse(req.params)
-  const { count } = await prisma.annotation.deleteMany({ where: { id } })
+  const { count } = await prisma.annotation.deleteMany({
+    where: { id, projectId: projectIdOf(res) },
+  })
   if (count === 0) throw new HttpError(404, '找不到這個標註')
   res.status(204).end()
 })

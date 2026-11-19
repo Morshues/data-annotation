@@ -2,15 +2,21 @@ import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import type { AnnotationPage } from '../api'
 import { api } from '../api'
-import { useLayout } from '../layout'
+import { projectPath, useLayout } from '../layout'
 import { AnnotationEditor } from '../components/AnnotationEditor'
 import { ContextText } from '../components/ContextText'
 
 export function AnnotationsPage() {
   const params = useParams()
   const documentId = params.id ? Number(params.id) : undefined
-  const { tags, documents, currentDocumentId, refreshTags, refreshDocuments } =
-    useLayout()
+  const {
+    projectId,
+    tags,
+    documents,
+    currentDocumentId,
+    refreshTags,
+    refreshDocuments,
+  } = useLayout()
 
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedTags = (searchParams.get('tags') ?? '')
@@ -56,7 +62,7 @@ export function AnnotationsPage() {
   useEffect(() => {
     let ignore = false
     api
-      .listAnnotations({
+      .listAnnotations(projectId, {
         tags: tagsKey ? tagsKey.split(',').map(Number) : [],
         tagMode,
         q,
@@ -77,7 +83,7 @@ export function AnnotationsPage() {
     return () => {
       ignore = true
     }
-  }, [tagsKey, tagMode, q, documentId, page, reloadToken])
+  }, [projectId, tagsKey, tagMode, q, documentId, page, reloadToken])
 
   function toggleTag(id: number) {
     const next = selectedTags.includes(id)
@@ -171,7 +177,10 @@ export function AnnotationsPage() {
               <Link
                 role="radio"
                 aria-checked={documentId !== undefined}
-                to={`/documents/${currentDocumentId}/annotations?${query}`}
+                to={projectPath(
+                  projectId,
+                  `/documents/${currentDocumentId}/annotations?${query}`,
+                )}
               >
                 目前文件{currentDocument && `：${currentDocument.title}`}
               </Link>
@@ -179,7 +188,7 @@ export function AnnotationsPage() {
             <Link
               role="radio"
               aria-checked={documentId === undefined}
-              to={`/annotations?${query}`}
+              to={projectPath(projectId, `/annotations?${query}`)}
             >
               全部文件
             </Link>
@@ -202,13 +211,13 @@ export function AnnotationsPage() {
                   annotation={a}
                   tagSuggestions={tags}
                   onSave={async (changes) => {
-                    await api.updateAnnotation(a.id, changes)
+                    await api.updateAnnotation(projectId, a.id, changes)
                     setEditingId(null)
                     reload()
                     await refreshTags()
                   }}
                   onDelete={async () => {
-                    await api.deleteAnnotation(a.id)
+                    await api.deleteAnnotation(projectId, a.id)
                     setEditingId(null)
                     reload()
                     await Promise.all([refreshTags(), refreshDocuments()])
@@ -219,7 +228,12 @@ export function AnnotationsPage() {
                 <>
                   <div className="card-meta">
                     {a.document ? (
-                      <Link to={`/documents/${a.document.id}`}>
+                      <Link
+                        to={projectPath(
+                          projectId,
+                          `/documents/${a.document.id}`,
+                        )}
+                      >
                         {a.document.title}
                       </Link>
                     ) : (

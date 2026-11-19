@@ -4,6 +4,7 @@ import path from 'node:path'
 import { z } from 'zod'
 import { prisma } from '../db.js'
 import { HttpError } from '../http-error.js'
+import { projectIdOf } from './project-scope.js'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 const ALLOWED_EXTENSIONS = ['.txt', '.md']
@@ -30,6 +31,7 @@ const documentSelect = {
 // Shared by every import source: normalizes line endings and rejects empty
 // content before saving.
 function createDocument(data: {
+  projectId: number
   title: string
   filename: string | null
   content: string
@@ -42,10 +44,11 @@ function createDocument(data: {
   })
 }
 
-export const documentsRouter = Router()
+export const documentsRouter = Router({ mergeParams: true })
 
 documentsRouter.get('/', async (_req, res) => {
   const documents = await prisma.document.findMany({
+    where: { projectId: projectIdOf(res) },
     select: { ...documentSelect, _count: { select: { annotations: true } } },
     orderBy: { createdAt: 'desc' },
   })
@@ -54,8 +57,8 @@ documentsRouter.get('/', async (_req, res) => {
 
 documentsRouter.get('/:id', async (req, res) => {
   const { id } = idParams.parse(req.params)
-  const document = await prisma.document.findUnique({
-    where: { id },
+  const document = await prisma.document.findFirst({
+    where: { id, projectId: projectIdOf(res) },
     include: {
       annotations: {
         include: { tags: { orderBy: { name: 'asc' } } },
@@ -92,6 +95,7 @@ documentsRouter.post('/', upload.single('file'), async (req, res) => {
   }
 
   const document = await createDocument({
+    projectId: projectIdOf(res),
     title: path.basename(filename, ext),
     filename,
     content,
@@ -108,7 +112,12 @@ documentsRouter.post(
     if (Buffer.byteLength(content) > MAX_FILE_SIZE) {
       throw new HttpError(413, '內容太大，上限是 5 MB')
     }
-    const document = await createDocument({ title, filename: null, content })
+    const document = await createDocument({
+      projectId: projectIdOf(res),
+      title,
+      filename: null,
+      content,
+    })
     res.status(201).json(document)
   },
 )

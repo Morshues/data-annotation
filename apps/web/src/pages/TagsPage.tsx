@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import type { TagWithCount } from '../api'
 import { api } from '../api'
-import { useLayout } from '../layout'
+import { projectPath, useLayout } from '../layout'
 
 export function TagsPage() {
-  const { tags, refreshTags } = useLayout()
+  const { projectId, tags, refreshTags } = useLayout()
   const [editingId, setEditingId] = useState<number | null>(null)
 
   if (tags.length === 0) {
@@ -25,11 +25,15 @@ export function TagsPage() {
           <li key={tag.id} className="annotation-card">
             <TagRow
               tag={tag}
+              annotationsPath={projectPath(
+                projectId,
+                `/annotations?tags=${tag.id}`,
+              )}
               editing={editingId === tag.id}
               onEdit={() => setEditingId(tag.id)}
               onClose={() => setEditingId(null)}
               onSave={async (description) => {
-                await api.updateTag(tag.id, { description })
+                await api.updateTag(projectId, tag.id, { description })
                 setEditingId(null)
                 await refreshTags()
               }}
@@ -43,13 +47,21 @@ export function TagsPage() {
 
 type RowProps = {
   tag: TagWithCount
+  annotationsPath: string
   editing: boolean
   onEdit: () => void
   onClose: () => void
   onSave: (description: string) => Promise<void>
 }
 
-function TagRow({ tag, editing, onEdit, onClose, onSave }: RowProps) {
+function TagRow({
+  tag,
+  annotationsPath,
+  editing,
+  onEdit,
+  onClose,
+  onSave,
+}: RowProps) {
   const [description, setDescription] = useState(tag.description)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -71,9 +83,7 @@ function TagRow({ tag, editing, onEdit, onClose, onSave }: RowProps) {
       <div className="card-meta">
         <span>
           <span className="tag">{tag.name}</span>{' '}
-          <Link to={`/annotations?tags=${tag.id}`}>
-            {tag.annotationCount} 個標註
-          </Link>
+          <Link to={annotationsPath}>{tag.annotationCount} 個標註</Link>
         </span>
         {!editing && (
           <button

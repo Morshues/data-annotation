@@ -10,17 +10,35 @@ datasource db {
   provider = "postgresql"
 }
 
+// Top-level workspace; documents, annotations and tags never cross projects
+model Project {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  description String       @default("")
+  createdAt   DateTime     @default(now())
+  documents   Document[]
+  annotations Annotation[]
+  tags        Tag[]
+}
+
 model Document {
   id          Int          @id @default(autoincrement())
+  projectId   Int
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   title       String
   filename    String? // null when the content was not imported from a file
   content     String
   createdAt   DateTime     @default(now())
   annotations Annotation[]
+
+  @@index([projectId])
 }
 
 model Annotation {
   id           Int       @id @default(autoincrement())
+  // Kept on the annotation itself because the document is optional
+  projectId    Int
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   documentId   Int?
   document     Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
   // Snapshot of the annotated text and its context, kept even if the document is gone
@@ -38,12 +56,17 @@ model Annotation {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  @@index([projectId])
   @@index([documentId])
 }
 
 model Tag {
   id          Int          @id @default(autoincrement())
-  name        String       @unique
+  projectId   Int
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
   description String       @default("")
   annotations Annotation[]
+
+  @@unique([projectId, name])
 }

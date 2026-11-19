@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { api } from '../api'
 import type { ImportSourceProps } from './import-source'
 
-export function FileImport({ onImported }: ImportSourceProps) {
+export function FileImport({ projectId, onImported }: ImportSourceProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -11,7 +11,7 @@ export function FileImport({ onImported }: ImportSourceProps) {
     setBusy(true)
     setError(null)
     try {
-      await onImported(await api.uploadDocument(file))
+      await onImported(await api.uploadDocument(projectId, file))
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {

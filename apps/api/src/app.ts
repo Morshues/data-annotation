@@ -3,17 +3,10 @@ import multer from 'multer'
 import { ZodError } from 'zod'
 import { prisma } from './db.js'
 import { HttpError } from './http-error.js'
-import { annotationsRouter } from './routes/annotations.js'
-import { documentsRouter } from './routes/documents.js'
-import { tagsRouter } from './routes/tags.js'
+import { Prisma } from './generated/prisma/client.js'
+import { projectsRouter } from './routes/projects.js'
 
 export const app = express()
-
-// Mounted before the global JSON parser because it parses its own larger
-// bodies (pasted document text)
-app.use('/api/documents', documentsRouter)
-
-app.use(express.json({ limit: '1mb' }))
 
 app.get('/api/health', async (_req, res) => {
   try {
@@ -25,8 +18,8 @@ app.get('/api/health', async (_req, res) => {
   }
 })
 
-app.use('/api/annotations', annotationsRouter)
-app.use('/api/tags', tagsRouter)
+// JSON bodies are parsed inside the router, see projects.ts
+app.use('/api/projects', projectsRouter)
 
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: '找不到這個 API' })
@@ -43,6 +36,11 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     } else {
       res.status(400).json({ error: `上傳失敗：${err.message}` })
     }
+  } else if (
+    err instanceof Prisma.PrismaClientKnownRequestError &&
+    err.code === 'P2002'
+  ) {
+    res.status(409).json({ error: '名稱已經存在' })
   } else if (err?.type === 'entity.too.large') {
     res.status(413).json({ error: '請求內容太大' })
   } else {
