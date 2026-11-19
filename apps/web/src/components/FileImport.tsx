@@ -1,12 +1,8 @@
 import { useRef, useState } from 'react'
-import type { DocumentSummary } from '../api'
 import { api } from '../api'
+import type { ImportSourceProps } from './import-source'
 
-type Props = {
-  onUploaded: (document: DocumentSummary) => void
-}
-
-export function UploadButton({ onUploaded }: Props) {
+export function FileImport({ onImported }: ImportSourceProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -15,7 +11,7 @@ export function UploadButton({ onUploaded }: Props) {
     setBusy(true)
     setError(null)
     try {
-      onUploaded(await api.uploadDocument(file))
+      await onImported(await api.uploadDocument(file))
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -25,14 +21,18 @@ export function UploadButton({ onUploaded }: Props) {
   }
 
   return (
-    <div className="upload">
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => inputRef.current?.click()}
-      >
-        {busy ? '上傳中…' : '上傳文件'}
-      </button>
+    <div className="import-source">
+      <p className="hint">支援 UTF-8 編碼的 .txt 或 .md 檔案，上限 5 MB。</p>
+      <div className="actions">
+        <button
+          type="button"
+          className="primary"
+          disabled={busy}
+          onClick={() => inputRef.current?.click()}
+        >
+          {busy ? '上傳中…' : '選擇檔案'}
+        </button>
+      </div>
       <input
         ref={inputRef}
         type="file"
@@ -44,9 +44,9 @@ export function UploadButton({ onUploaded }: Props) {
         }}
       />
       {error && (
-        <span className="error" role="alert">
+        <p className="error" role="alert">
           {error}
-        </span>
+        </p>
       )}
     </div>
   )

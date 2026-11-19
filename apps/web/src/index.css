@@ -176,7 +176,7 @@ textarea {
   max-width: 28rem;
 }
 
-.upload {
+.import {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -452,7 +452,8 @@ textarea {
   border-left: 1px solid var(--border);
 }
 
-.segmented > [aria-checked='true'] {
+.segmented > [aria-checked='true'],
+.segmented > [aria-selected='true'] {
   background: var(--accent);
   color: var(--accent-text);
 }
@@ -534,6 +535,46 @@ textarea {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--muted);
+}
+
+.import-dialog {
+  width: min(40rem, calc(100vw - 2rem));
+  padding: 1.25rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+/* The dialog itself receives focus when it opens; it is not a control */
+.import-dialog:focus-visible {
+  outline: none;
+}
+
+.import-dialog::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+.import-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.import-dialog-header h2 {
+  margin: 0;
+}
+
+.import-source {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.import-source .hint {
+  margin: 0;
 }
 
 .tags-pane {

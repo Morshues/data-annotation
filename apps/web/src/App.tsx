@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { NavLink, Outlet, useMatch, useNavigate } from 'react-router'
 import type { DocumentSummary, TagWithCount } from './api'
 import { api } from './api'
-import { UploadButton } from './components/UploadButton'
+import { ImportButton } from './components/ImportButton'
 import type { LayoutContext } from './layout'
 
 function App() {
@@ -68,8 +68,8 @@ function App() {
             ))}
           </select>
         </label>
-        <UploadButton
-          onUploaded={async (doc) => {
+        <ImportButton
+          onImported={async (doc) => {
             await refreshDocuments()
             navigate(`/documents/${doc.id}`)
           }}

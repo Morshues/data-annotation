@@ -124,7 +124,7 @@ function DocumentView({ documentId }: { documentId: number }) {
             <ol>
               <li>在左邊的全文拖選一段文字，作為上下文。</li>
               <li>在這裡顯示的上下文中，再拖選要標註的重點。</li>
-              <li>加上標籤、描述和備註後儲存。</li>
+              <li>加上標籤和描述後儲存。</li>
             </ol>
             <p className="muted">
               點全文中已標註的文字，可以查看或修改標註。這份文件目前有{' '}

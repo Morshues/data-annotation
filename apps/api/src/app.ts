@@ -9,6 +9,10 @@ import { tagsRouter } from './routes/tags.js'
 
 export const app = express()
 
+// Mounted before the global JSON parser because it parses its own larger
+// bodies (pasted document text)
+app.use('/api/documents', documentsRouter)
+
 app.use(express.json({ limit: '1mb' }))
 
 app.get('/api/health', async (_req, res) => {
@@ -21,7 +25,6 @@ app.get('/api/health', async (_req, res) => {
   }
 })
 
-app.use('/api/documents', documentsRouter)
 app.use('/api/annotations', annotationsRouter)
 app.use('/api/tags', tagsRouter)
 
@@ -40,6 +43,8 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     } else {
       res.status(400).json({ error: `上傳失敗：${err.message}` })
     }
+  } else if (err?.type === 'entity.too.large') {
+    res.status(413).json({ error: '請求內容太大' })
   } else {
     console.error(err)
     res.status(500).json({ error: '伺服器發生錯誤' })

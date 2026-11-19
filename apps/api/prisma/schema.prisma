@@ -13,7 +13,7 @@ datasource db {
 model Document {
   id          Int          @id @default(autoincrement())
   title       String
-  filename    String
+  filename    String? // null when the content was not imported from a file
   content     String
   createdAt   DateTime     @default(now())
   annotations Annotation[]

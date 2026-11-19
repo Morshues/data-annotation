@@ -9,7 +9,7 @@ export type TagWithCount = Tag & { annotationCount: number }
 export type DocumentSummary = {
   id: number
   title: string
-  filename: string
+  filename: string | null
   createdAt: string
   _count?: { annotations: number }
 }
@@ -99,6 +99,9 @@ export const api = {
       body: form,
     })
   },
+
+  createTextDocument: (data: { title: string; content: string }) =>
+    request<DocumentSummary>('/documents/text', json('POST', data)),
 
   listAnnotations: (query: AnnotationQuery) => {
     const params = new URLSearchParams({
