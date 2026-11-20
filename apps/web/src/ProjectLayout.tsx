@@ -120,6 +120,7 @@ function ProjectView({ projectId }: { projectId: number }) {
               await refreshDocuments()
               navigate(projectPath(projectId, `/documents/${doc.id}`))
             }}
+            onDocumentsChanged={refreshDocuments}
           />
         </div>
       </div>

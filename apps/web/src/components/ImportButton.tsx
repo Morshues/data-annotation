@@ -14,6 +14,7 @@ const sources = [
 export function ImportButton({
   projectId,
   onImported,
+  onDocumentsChanged,
 }: Omit<ImportSourceProps, 'onClose'>) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   // Content is only mounted while open, so every import starts from a blank form
@@ -69,6 +70,7 @@ export function ImportButton({
                     await onImported(document)
                     close()
                   }}
+                  onDocumentsChanged={onDocumentsChanged}
                   onClose={close}
                 />
               </div>

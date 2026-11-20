@@ -642,6 +642,24 @@ textarea {
   margin: 0;
 }
 
+.upload-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upload-results .filename {
+  margin-right: 0.5rem;
+  font-weight: 600;
+}
+
+.upload-results .failed {
+  color: var(--danger);
+}
+
 .projects-pane {
   display: flex;
   flex-direction: column;
