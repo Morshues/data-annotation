@@ -91,6 +91,8 @@ apps/
 
    開發時，前端的 `/api` 請求會由 Vite proxy 轉給後端。
 
+   同一個區域網路的其他裝置可以用 `http://<這台電腦的 IP>:5173` 連線，Vite 啟動時會印出 `Network` 網址。這個服務沒有登入機制，只適合在信任的網路上使用。
+
 6. 確認服務狀態：
 
    ```sh
@@ -129,7 +131,7 @@ apps/
    docker compose up --build -d
    ```
 
-3. 打開 http://localhost:8080，或執行：
+3. 打開 http://localhost:8080（區域網路的其他裝置用 `http://<這台電腦的 IP>:8080`），或執行：
 
    ```sh
    curl http://localhost:8080/api/health
