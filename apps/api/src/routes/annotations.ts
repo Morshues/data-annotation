@@ -28,7 +28,7 @@ const listQuery = z.object({
 })
 
 // Span offsets within the context, sorted and checked for overlaps
-const spansInput = z
+export const spansInput = z
   .array(
     z.object({
       start: z.number().int().min(0),
@@ -82,7 +82,7 @@ function connectTags(projectId: number, names: string[]) {
 
 // Snapshots each span's text, and maps it into the document when the context
 // came from one
-function buildSpans(
+export function buildSpans(
   context: string,
   contextStart: number | null,
   spans: SpanInput[],
@@ -119,7 +119,7 @@ annotationsRouter.get('/', async (req, res) => {
   }
   if (q) {
     conditions.push({
-      OR: (['context', 'description'] as const).map((field) => ({
+      OR: (['context', 'description', 'source'] as const).map((field) => ({
         [field]: { contains: q, mode: 'insensitive' },
       })),
     })

@@ -123,7 +123,7 @@ export function AnnotationsPage() {
           <input
             type="search"
             value={keyword}
-            placeholder="搜尋標註、上下文、描述"
+            placeholder="搜尋上下文、描述、來源"
             onChange={(e) => setKeyword(e.target.value)}
           />
         </label>
@@ -283,7 +283,9 @@ export function AnnotationsPage() {
                         {a.document.title}
                       </Link>
                     ) : (
-                      <span className="muted">無對應全文</span>
+                      <span className="muted">
+                        {a.source ? `來源：${a.source}` : '無對應全文'}
+                      </span>
                     )}
                     <button
                       type="button"

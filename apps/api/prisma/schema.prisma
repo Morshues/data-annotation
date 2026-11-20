@@ -48,6 +48,8 @@ model Annotation {
   contextStart Int?
   contextEnd   Int?
   spans        AnnotationSpan[]
+  // Free-form origin of the annotation, e.g. the file number from an import
+  source       String           @default("")
   description  String           @default("")
   tags         Tag[]
   createdAt    DateTime         @default(now())

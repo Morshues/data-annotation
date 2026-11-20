@@ -9,6 +9,7 @@ import { DocumentPage } from './pages/DocumentPage.tsx'
 import { ProjectHomePage } from './pages/ProjectHomePage.tsx'
 import { ProjectsPage } from './pages/ProjectsPage.tsx'
 import { RootRedirect } from './pages/RootRedirect.tsx'
+import { TableImportPage } from './pages/TableImportPage.tsx'
 import { TagsPage } from './pages/TagsPage.tsx'
 
 createRoot(document.getElementById('root')!).render(
@@ -27,6 +28,7 @@ createRoot(document.getElementById('root')!).render(
             />
             <Route path="annotations" element={<AnnotationsPage />} />
             <Route path="tags" element={<TagsPage />} />
+            <Route path="import" element={<TableImportPage />} />
           </Route>
         </Route>
       </Routes>

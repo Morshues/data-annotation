@@ -54,6 +54,7 @@ export type Annotation = {
   contextStart: number | null
   contextEnd: number | null
   spans: AnnotationSpan[]
+  source: string
   description: string
   tags: Tag[]
   document?: { id: number; title: string } | null
@@ -88,6 +89,22 @@ export type NewAnnotation = {
   spans: Range[]
   tags: string[]
   description: string
+}
+
+export type ImportedAnnotation = {
+  source: string
+  context: string
+  spans: Range[]
+  tags: { group: string | null; name: string }[]
+  description: string
+}
+
+export type ImportResult = {
+  created: number
+  linkedToDocument: number
+  unpositioned: number
+  createdGroups: string[]
+  createdTags: string[]
 }
 
 export type AnnotationChanges = {
@@ -176,6 +193,12 @@ export const api = {
     request<void>(scoped(projectId, `/annotations/${id}`), {
       method: 'DELETE',
     }),
+
+  importAnnotations: (projectId: number, annotations: ImportedAnnotation[]) =>
+    request<ImportResult>(
+      scoped(projectId, '/imports/annotations'),
+      json('POST', { annotations }),
+    ),
 
   listTags: (projectId: number) =>
     request<TagWithCount[]>(scoped(projectId, '/tags')),

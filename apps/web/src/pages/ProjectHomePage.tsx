@@ -17,7 +17,9 @@ export function ProjectHomePage() {
   return (
     <div className="empty-panel">
       <h2>這個專案還沒有任何文件</h2>
-      <p>按右上角的「匯入文件」，上傳檔案或貼上文字，就可以開始標註。</p>
+      <p>
+        按右上角的「匯入」，上傳檔案或貼上文字，就可以開始標註；也可以從表格匯入整理好的標註。
+      </p>
     </div>
   )
 }

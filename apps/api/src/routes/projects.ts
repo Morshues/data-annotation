@@ -4,6 +4,7 @@ import { prisma } from '../db.js'
 import type { Prisma } from '../generated/prisma/client.js'
 import { annotationsRouter } from './annotations.js'
 import { documentsRouter } from './documents.js'
+import { importsRouter } from './imports.js'
 import { loadProject, projectIdOf } from './project-scope.js'
 import { tagGroupsRouter } from './tag-groups.js'
 import { tagsRouter } from './tags.js'
@@ -24,9 +25,10 @@ const include = {
 export const projectsRouter = Router()
 
 projectsRouter.use('/:projectId', loadProject)
-// Mounted before the JSON parser below because it parses its own larger
-// bodies (pasted document text)
+// Mounted before the JSON parser below because they parse their own larger
+// bodies (pasted document text, imported tables)
 projectsRouter.use('/:projectId/documents', documentsRouter)
+projectsRouter.use('/:projectId/imports', importsRouter)
 
 projectsRouter.use(express.json({ limit: '1mb' }))
 projectsRouter.use('/:projectId/annotations', annotationsRouter)
