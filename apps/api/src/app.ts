@@ -2,11 +2,16 @@ import express, { type ErrorRequestHandler } from 'express'
 import multer from 'multer'
 import { ZodError } from 'zod'
 import { prisma } from './db.js'
+import { requireUser } from './auth.js'
 import { HttpError } from './http-error.js'
 import { Prisma } from './generated/prisma/client.js'
+import { authRouter } from './routes/auth.js'
 import { projectsRouter } from './routes/projects.js'
 
 export const app = express()
+
+// Behind nginx, so req.secure reflects the original HTTPS connection
+app.set('trust proxy', 1)
 
 app.get('/api/health', async (_req, res) => {
   try {
@@ -18,8 +23,10 @@ app.get('/api/health', async (_req, res) => {
   }
 })
 
+app.use('/api/auth', authRouter)
+
 // JSON bodies are parsed inside the router, see projects.ts
-app.use('/api/projects', projectsRouter)
+app.use('/api/projects', requireUser, projectsRouter)
 
 app.use('/api', (_req, res) => {
   res.status(404).json({ error: '找不到這個 API' })

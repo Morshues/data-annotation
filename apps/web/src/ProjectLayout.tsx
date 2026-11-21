@@ -4,7 +4,7 @@ import type { DocumentSummary, TagGroup, TagWithCount } from './api'
 import { api } from './api'
 import { ImportButton } from './components/ImportButton'
 import type { LayoutContext } from './layout'
-import { projectPath, rememberProject } from './layout'
+import { projectPath } from './layout'
 
 export function ProjectLayout() {
   const projectId = Number(useParams().projectId)
@@ -48,7 +48,6 @@ function ProjectView({ projectId }: { projectId: number }) {
   )
 
   useEffect(() => {
-    rememberProject(projectId)
     api.listDocuments(projectId).then(setDocuments, showError)
     void refreshTags()
   }, [projectId, refreshTags])

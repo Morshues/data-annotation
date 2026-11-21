@@ -10,16 +10,60 @@ datasource db {
   provider = "postgresql"
 }
 
+// A Google account that has signed in
+model User {
+  id        Int             @id @default(autoincrement())
+  // Google's stable account id ("sub"); the email can change
+  googleId  String          @unique
+  email     String
+  name      String          @default("")
+  picture   String          @default("")
+  createdAt DateTime        @default(now())
+  sessions  Session[]
+  projects  ProjectMember[]
+}
+
+model Session {
+  // SHA-256 of the token in the cookie, so a database leak exposes no tokens
+  id        String   @id
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
 // Top-level workspace; documents, annotations and tags never cross projects
 model Project {
-  id          Int          @id @default(autoincrement())
-  name        String       @unique
-  description String       @default("")
-  createdAt   DateTime     @default(now())
+  id          Int             @id @default(autoincrement())
+  name        String
+  description String          @default("")
+  createdAt   DateTime        @default(now())
+  members     ProjectMember[]
   documents   Document[]
   annotations Annotation[]
   tags        Tag[]
   tagGroups   TagGroup[]
+}
+
+enum ProjectRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+// Who can access a project and how; sharing a project adds rows here
+model ProjectMember {
+  projectId Int
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      ProjectRole
+  createdAt DateTime    @default(now())
+
+  @@id([projectId, userId])
+  @@index([userId])
 }
 
 model Document {

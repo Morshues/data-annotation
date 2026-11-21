@@ -4,7 +4,9 @@
 
 ## 功能
 
-- **專案**：所有資料都放在專案底下，每個專案有自己的文件、標註和標籤，彼此不共用。用左上角的選單切換專案，或選「管理專案…」建立專案、修改名稱和描述。目前不能刪除專案。
+- **登入**：用 Google 帳號登入，沒有登入看不到任何資料。設定方式見「Google 登入設定」。
+- **專案**：所有資料都放在專案底下，每個專案有自己的文件、標註和標籤，彼此不共用。登入後的首頁用卡片列出你有權限的專案，可以建立專案、修改名稱和描述；用左上角的選單切換專案。目前不能刪除專案。
+  - 權限：建立專案的人是擁有者。資料結構已經預留分享功能（擁有者／可編輯／唯讀），但還沒有分享的介面。
 - **匯入**：按「匯入」選擇匯入方式，上限都是 5 MB。目前不能編輯或刪除文件。
   - 上傳檔案：UTF-8 編碼的 `.txt` 或 `.md` 檔案，匯入成文件；可以一次選擇多個檔案。
   - 貼上文字：從剪貼簿貼上或直接輸入，並填寫標題，匯入成文件。
@@ -74,6 +76,8 @@ apps/
    cp apps/api/.env.example apps/api/.env
    ```
 
+   要能登入，還需要填入 `GOOGLE_CLIENT_ID`，見「Google 登入設定」。
+
 4. 建立資料表：
 
    ```sh
@@ -101,6 +105,20 @@ apps/
    ```
 
    資料庫連不上時會回傳 HTTP 503。
+
+## Google 登入設定
+
+1. 到 [Google Cloud Console](https://console.cloud.google.com/apis/credentials) 建立 OAuth client ID，應用程式類型選「網頁應用程式」。第一次使用需要先設定 OAuth 同意畫面。
+2. 在「已授權的 JavaScript 來源」加入要開啟網站的網址：
+   - 本機開發：`http://localhost:5173`
+   - Docker：`http://localhost:8080`
+   - 正式網域必須是 HTTPS，例如 `https://corpus.example.com`。
+3. 把 client ID 填進環境變數 `GOOGLE_CLIENT_ID`：本機開發用 `apps/api/.env`，Docker 用根目錄的 `.env`。不需要 client secret。
+4. 重新啟動後端。
+
+Google 只接受 localhost 或 HTTPS 網域，所以用區網 IP（例如 `http://192.168.1.10:5173`）開啟時無法登入。
+
+登入狀態保存在 30 天有效的 cookie 裡，登出後立即失效。
 
 ## IntelliJ IDEA
 

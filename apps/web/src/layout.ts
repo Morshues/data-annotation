@@ -30,23 +30,3 @@ export function useLayout() {
 export function projectPath(projectId: number, path = '') {
   return `/projects/${projectId}${path}`
 }
-
-const LAST_PROJECT_KEY = 'lastProjectId'
-
-// Storage can be unavailable (private mode, blocked site data); the app then
-// simply falls back to the first project.
-export function rememberProject(projectId: number) {
-  try {
-    localStorage.setItem(LAST_PROJECT_KEY, String(projectId))
-  } catch {
-    // ignore
-  }
-}
-
-export function lastProjectId(): number | null {
-  try {
-    return Number(localStorage.getItem(LAST_PROJECT_KEY)) || null
-  } catch {
-    return null
-  }
-}

@@ -1,11 +1,17 @@
 import express, { Router } from 'express'
 import { z } from 'zod'
+import { userOf } from '../auth.js'
 import { prisma } from '../db.js'
-import type { Prisma } from '../generated/prisma/client.js'
+import type { Prisma, ProjectRole } from '../generated/prisma/client.js'
 import { annotationsRouter } from './annotations.js'
 import { documentsRouter } from './documents.js'
 import { importsRouter } from './imports.js'
-import { loadProject, projectIdOf } from './project-scope.js'
+import {
+  loadProject,
+  projectIdOf,
+  projectRoleOf,
+  requireRole,
+} from './project-scope.js'
 import { tagGroupsRouter } from './tag-groups.js'
 import { tagsRouter } from './tags.js'
 
@@ -22,6 +28,13 @@ const include = {
   _count: { select: { documents: true, annotations: true } },
 } satisfies Prisma.ProjectInclude
 
+type ProjectWithCounts = Prisma.ProjectGetPayload<{ include: typeof include }>
+
+// The caller's role tells the client what it may do with the project
+function withRole(project: ProjectWithCounts, role: ProjectRole) {
+  return { ...project, role }
+}
+
 export const projectsRouter = Router()
 
 projectsRouter.use('/:projectId', loadProject)
@@ -36,25 +49,32 @@ projectsRouter.use('/:projectId/tags', tagsRouter)
 projectsRouter.use('/:projectId/tag-groups', tagGroupsRouter)
 
 projectsRouter.get('/', async (_req, res) => {
-  const projects = await prisma.project.findMany({
-    include,
-    orderBy: { createdAt: 'asc' },
+  const memberships = await prisma.projectMember.findMany({
+    where: { userId: userOf(res).id },
+    include: { project: { include } },
+    orderBy: { project: { createdAt: 'asc' } },
   })
-  res.json(projects)
+  res.json(memberships.map((m) => withRole(m.project, m.role)))
 })
 
 projectsRouter.post('/', async (req, res) => {
   const body = createBody.parse(req.body)
-  const project = await prisma.project.create({ data: body, include })
-  res.status(201).json(project)
+  const project = await prisma.project.create({
+    data: {
+      ...body,
+      members: { create: { userId: userOf(res).id, role: 'OWNER' } },
+    },
+    include,
+  })
+  res.status(201).json(withRole(project, 'OWNER'))
 })
 
-projectsRouter.patch('/:projectId', async (req, res) => {
+projectsRouter.patch('/:projectId', requireRole('OWNER'), async (req, res) => {
   const body = updateBody.parse(req.body)
   const project = await prisma.project.update({
     where: { id: projectIdOf(res) },
     data: body,
     include,
   })
-  res.json(project)
+  res.json(withRole(project, projectRoleOf(res)))
 })

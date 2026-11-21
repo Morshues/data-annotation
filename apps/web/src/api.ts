@@ -1,10 +1,24 @@
 import type { Range } from './lib/segments'
 
+export type User = {
+  id: number
+  email: string
+  name: string
+  picture: string
+}
+
+// null until GOOGLE_CLIENT_ID is configured on the server
+export type AuthConfig = { googleClientId: string | null }
+
+export type ProjectRole = 'OWNER' | 'EDITOR' | 'VIEWER'
+
 export type Project = {
   id: number
   name: string
   description: string
   createdAt: string
+  // The signed-in user's role in the project
+  role: ProjectRole
   _count: { documents: number; annotations: number }
 }
 
@@ -113,8 +127,16 @@ export type AnnotationChanges = {
   description: string
 }
 
+// Dispatched on window whenever the session turns out to be missing or
+// expired, so the app can return to the sign-in page from anywhere
+export const UNAUTHORIZED_EVENT = 'unauthorized'
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api${path}`, init)
+  if (res.status === 401) {
+    window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+    throw new Error('請先登入')
+  }
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as {
       error?: string
@@ -137,6 +159,15 @@ const scoped = (projectId: number, path: string) =>
   `/projects/${projectId}${path}`
 
 export const api = {
+  getAuthConfig: () => request<AuthConfig>('/auth/config'),
+
+  me: () => request<User>('/auth/me'),
+
+  loginWithGoogle: (credential: string) =>
+    request<User>('/auth/google', json('POST', { credential })),
+
+  logout: () => request<void>('/auth/logout', { method: 'POST' }),
+
   listProjects: () => request<Project[]>('/projects'),
 
   createProject: (data: { name: string; description: string }) =>
