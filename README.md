@@ -149,13 +149,39 @@ Google 只接受 localhost 或 HTTPS 網域，所以用區網 IP（例如 `http:
    docker compose up --build -d
    ```
 
-3. 打開 http://localhost:8080（區域網路的其他裝置用 `http://<這台電腦的 IP>:8080`），或執行：
+3. 在這台主機上打開 http://localhost:8080，或執行：
 
    ```sh
    curl http://localhost:8080/api/health
    ```
 
-`web` 用 nginx 提供前端靜態檔，並把 `/api` 轉給 `api`。只有 `web` 會對外開放 port，`db` 和 `api` 只在 Docker 內部網路使用。資料庫的資料存在 `db-data` volume。`api` 每次啟動時會先執行 `prisma migrate deploy`，套用還沒執行的 migration。
+`web` 用 nginx 提供前端靜態檔，並把 `/api` 轉給 `api`。只有 `web` 會開放 port，而且預設只綁在 `127.0.0.1`，其他電腦連不到；`db` 和 `api` 只在 Docker 內部網路使用。資料庫的資料存在 `db-data` volume。`api` 每次啟動時會先執行 `prisma migrate deploy`，套用還沒執行的 migration。
+
+### 對外提供服務
+
+用主機上的 nginx 處理 HTTPS，再轉給 `http://127.0.0.1:8080`。例如：
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name corpus.example.com;
+    # ssl_certificate / ssl_certificate_key ...
+
+    # Table imports send up to 20 MB
+    client_max_body_size 21m;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+`X-Forwarded-Proto` 要設定，後端才知道是 HTTPS 連線，登入 cookie 才會加上 `Secure`。記得在 Google 登入設定加入這個 HTTPS 網域。
+
+不使用主機 nginx、想讓區網直接連線時，在 `.env` 設定 `WEB_HOST=0.0.0.0`。這時就不要讓外部網路連到這台主機的 8080。
 
 停止服務：
 
@@ -187,9 +213,11 @@ docker compose down -v     # 連同資料庫資料一起刪除
 
 **`.env`**（Docker Compose）
 
-| 變數                | 說明            | 預設值 |
-| ------------------- | --------------- | ------ |
-| `POSTGRES_USER`     | 資料庫使用者    | —      |
-| `POSTGRES_PASSWORD` | 資料庫密碼      | —      |
-| `POSTGRES_DB`       | 資料庫名稱      | —      |
-| `WEB_PORT`          | 網站對外的 port | `8080` |
+| 變數                | 說明                          | 預設值      |
+| ------------------- | ----------------------------- | ----------- |
+| `POSTGRES_USER`     | 資料庫使用者                  | —           |
+| `POSTGRES_PASSWORD` | 資料庫密碼                    | —           |
+| `POSTGRES_DB`       | 資料庫名稱                    | —           |
+| `WEB_PORT`          | 網站對外的 port               | `8080`      |
+| `WEB_HOST`          | 網站綁定的位址                | `127.0.0.1` |
+| `GOOGLE_CLIENT_ID`  | Google 登入的 OAuth client ID | —           |

@@ -33,7 +33,9 @@ services:
       dockerfile: apps/web/Dockerfile
     restart: unless-stopped
     ports:
-      - '${WEB_PORT:-8080}:80'
+      # Loopback only by default; a reverse proxy on the host serves the public
+      # site. Set WEB_HOST=0.0.0.0 to expose it directly.
+      - '${WEB_HOST:-127.0.0.1}:${WEB_PORT:-8080}:80'
     depends_on:
       - api
 
